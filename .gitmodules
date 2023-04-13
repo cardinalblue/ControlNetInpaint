@@ -1,3 +1,6 @@
-[submodule "models/ControlNet"]
-	path = models/ControlNet
-	url = git@github.com:lllyasviel/ControlNet.git
+[submodule "models/sd-controlnet-scribble"]
+	path = models/sd-controlnet-scribble
+	url = https://huggingface.co/lllyasviel/sd-controlnet-scribble
+[submodule "models/stable-diffusion-inpainting"]
+	path = models/stable-diffusion-inpainting
+	url = https://huggingface.co/runwayml/stable-diffusion-inpainting
