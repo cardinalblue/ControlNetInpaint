@@ -1,3 +1,19 @@
+# Jaime Notes
+- When get this error:
+`WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8)` then follow solution [![here](https://collabnix.com/warning-the-requested-images-platform-linux-amd64-does-not-match-the-detected-host-platform-linux-arm64-v8/)].
+
+- Because platform issue need to:
+  - Build:
+  `cog build -t dockerimage1 --debug`
+  - Run python:
+  `docker run -it --platform=linux/amd64 --shm-size 8G <container name> python`
+  `docker exec -it <container name> /bin/bash`
+
+- Loading models locally see [here](https://github.com/huggingface/diffusers/blob/98c5e5da31dd70facf92970074be49501cd5e20b/docs/source/en/using-diffusers/loading.mdx)
+  - Install [git-lfs](https://git-lfs.com/)
+  - Clone repos
+  
+
 # :recycle: ControlNetInpaint
 [![Open In Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mikonvergence/ControlNetInpaint/blob/main/ControlNet-with-Inpaint-Demo-colab.ipynb)
 
