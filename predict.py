@@ -7,11 +7,9 @@ from diffusers import StableDiffusionInpaintPipeline, ControlNetModel, UniPCMult
 from src.pipeline_stable_diffusion_controlnet_inpaint import *
 from diffusers.utils import load_image
 
-import cv2
 from PIL import Image
 import numpy as np
 import torch
-from matplotlib import pyplot as plt
 from controlnet_aux import HEDdetector
 
 class Predictor(BasePredictor):
