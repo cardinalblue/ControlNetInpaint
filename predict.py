@@ -21,8 +21,8 @@ class Predictor(BasePredictor):
         # Load control net
         print(">>>> Predictor.setup loading ControlNetModel")
         controlnet = ControlNetModel.from_pretrained(
-            # "fusing/stable-diffusion-v1-5-controlnet-scribble",     # Load over network
-            "./models/sd-controlnet-scribble",                      # Load from package
+            "fusing/stable-diffusion-v1-5-controlnet-scribble",     # Load over network
+            # "./models/sd-controlnet-scribble",                      # Load from package
             torch_dtype=torch.float16
         )
         if torch.cuda.is_available():
@@ -32,8 +32,8 @@ class Predictor(BasePredictor):
         # Load inpainting pipeline
         print(">>>> Predictor.setup loading StableDiffusionControlNetInpaintPipeline")
         self.pipe_sd = StableDiffusionControlNetInpaintPipeline.from_pretrained(
-            # "runwayml/stable-diffusion-inpainting",     # Load over network
-            "./models/stable-diffusion-inpainting",     # Load from package
+            "runwayml/stable-diffusion-inpainting",     # Load over network
+            # "./models/stable-diffusion-inpainting",     # Load from package
             controlnet=controlnet, 
             torch_dtype=torch.float16
         )
