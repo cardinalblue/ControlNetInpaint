@@ -21,8 +21,8 @@ class Predictor(BasePredictor):
         # Load control net
         print(">>>> Predictor.setup loading ControlNetModel")
         controlnet = ControlNetModel.from_pretrained(
-            "fusing/stable-diffusion-v1-5-controlnet-scribble",     # Load over network
-            # "./models/sd-controlnet-scribble",                      # Load from package
+            # "fusing/stable-diffusion-v1-5-controlnet-scribble",     # Load over network
+            "./models/sd-controlnet-scribble",                      # Load from package
             torch_dtype=torch.float16
         )
         if torch.cuda.is_available():
@@ -32,8 +32,8 @@ class Predictor(BasePredictor):
         # Load inpainting pipeline
         print(">>>> Predictor.setup loading StableDiffusionControlNetInpaintPipeline")
         self.pipe_sd = StableDiffusionControlNetInpaintPipeline.from_pretrained(
-            "runwayml/stable-diffusion-inpainting",     # Load over network
-            # "./models/stable-diffusion-inpainting",     # Load from package
+            # "runwayml/stable-diffusion-inpainting",     # Load over network
+            "./models/stable-diffusion-inpainting",     # Load from package
             controlnet=controlnet, 
             torch_dtype=torch.float16
         )
@@ -42,12 +42,9 @@ class Predictor(BasePredictor):
 
         if torch.cuda.is_available():
             print(">>>> Predictor.setup using CUDA for StableDiffusionControlNetInpaintPipeline")
+            # remove following line if xformers is not installed
             self.pipe_sd.enable_xformers_memory_efficient_attention()
             self.pipe_sd.to('cuda')
-
-
-        # remove following line if xformers is not installed
-
 
         print(">>>> Predictor.setup finished")
 
@@ -55,18 +52,20 @@ class Predictor(BasePredictor):
         self,
         prompt:         str  = Input(description="Prompt text"),
         image:          Path = Input(description="Input image"),
-        mask_image:     Path = Input(description="Mask image"),
-        control_image:  Path = Input(description="Scribble image"),
-    ) -> Path:
+        mask_image:     Path = Input(description="Mask image, white parts will be inpainted, black parts will be kept"),
+        control_image:  Path = Input(description="Scribble image, black outline on white background"),
+        num_outputs:    int  = Input(default=1, description="Number of images to generate per prompt"),
+    ) -> List[Path]:
         """Run a single prediction on the model"""
 
         print(f">>>> Predictor.predict '{prompt}'")
+        print(f">>>> Predictor.predict cuda: {torch.__version__} {torch.version.cuda} {self.pipe_sd}")
 
         # See https://github.com/andreasjansson/cog-stable-diffusion-inpainting/blob/master/predict.py for reference
 
-        image           = Image.open(image).convert("RGB")
-        mask_image      = Image.open(mask_image).convert("RGB")
-        control_image   = Image.open(control_image).convert("RGB")
+        image                   = Image.open(image).convert("RGB")
+        mask_image              = Image.open(mask_image).convert("RGB")
+        control_image           = Image.open(control_image).convert("RGB")
 
         # ---- Generation!
         generator = torch.manual_seed(0)
@@ -76,7 +75,8 @@ class Predictor(BasePredictor):
             generator=generator,
             image=image,
             control_image=control_image,
-            mask_image=mask_image
+            mask_image=mask_image,
+            num_images_per_prompt=num_outputs,
         )
 
         # ---- Process output
