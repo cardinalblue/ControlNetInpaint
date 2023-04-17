@@ -16,42 +16,57 @@ class Predictor(BasePredictor):
     def setup(self):
         """Load the model into memory to make running multiple predictions efficient"""
 
-        # Load HED (this model is small, get from HuggingFace)
-        self.hed = HEDdetector.from_pretrained('lllyasviel/ControlNet')
+        print(">>>> Predictor.setup")
 
         # Load control net
+        print(">>>> Predictor.setup loading ControlNetModel")
         controlnet = ControlNetModel.from_pretrained(
-            "./models/sd-controlnet-scribble", torch_dtype=torch.float16
+            # "fusing/stable-diffusion-v1-5-controlnet-scribble",     # Load over network
+            "./models/sd-controlnet-scribble",                      # Load from package
+            torch_dtype=torch.float16
         )
+        if torch.cuda.is_available():
+            print(">>>> Predictor.setup using CUDA for ControlNetModel")
+            controlnet.to('cuda')
 
         # Load inpainting pipeline
+        print(">>>> Predictor.setup loading StableDiffusionControlNetInpaintPipeline")
         self.pipe_sd = StableDiffusionControlNetInpaintPipeline.from_pretrained(
-            "./models/stable-diffusion-inpainting", controlnet=controlnet, torch_dtype=torch.float16, safety_checker=None
+            # "runwayml/stable-diffusion-inpainting",     # Load over network
+            "./models/stable-diffusion-inpainting",     # Load from package
+            controlnet=controlnet, 
+            torch_dtype=torch.float16
         )
         # speed up diffusion process with faster scheduler and memory optimization
         self.pipe_sd.scheduler = UniPCMultistepScheduler.from_config(self.pipe_sd.scheduler.config)
 
-        # remove following line if xformers is not installed
-        self.pipe_sd.enable_xformers_memory_efficient_attention()
+        if torch.cuda.is_available():
+            print(">>>> Predictor.setup using CUDA for StableDiffusionControlNetInpaintPipeline")
+            self.pipe_sd.enable_xformers_memory_efficient_attention()
+            self.pipe_sd.to('cuda')
 
-        self.pipe_sd.to('cuda')
+
+        # remove following line if xformers is not installed
+
+
+        print(">>>> Predictor.setup finished")
 
     def predict(
         self,
         prompt:         str  = Input(description="Prompt text"),
         image:          Path = Input(description="Input image"),
         mask_image:     Path = Input(description="Mask image"),
-        scribble_image: Path = Input(description="Scribble image"),
+        control_image:  Path = Input(description="Scribble image"),
     ) -> Path:
         """Run a single prediction on the model"""
+
+        print(f">>>> Predictor.predict '{prompt}'")
 
         # See https://github.com/andreasjansson/cog-stable-diffusion-inpainting/blob/master/predict.py for reference
 
         image           = Image.open(image).convert("RGB")
         mask_image      = Image.open(mask_image).convert("RGB")
-        scribble_image  = Image.open(scribble_image).convert("RGB")
-
-        control_image = self.hed(image, scribble=True)
+        control_image   = Image.open(control_image).convert("RGB")
 
         # ---- Generation!
         generator = torch.manual_seed(0)
