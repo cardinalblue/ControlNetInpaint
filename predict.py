@@ -11,6 +11,7 @@ from PIL import Image
 import numpy as np
 import torch
 from controlnet_aux import HEDdetector
+import random
 
 class Predictor(BasePredictor):
     def setup(self):
@@ -55,6 +56,8 @@ class Predictor(BasePredictor):
         mask_image:     Path = Input(description="Mask image, white parts will be inpainted, black parts will be kept"),
         control_image:  Path = Input(description="Scribble image, black outline on white background"),
         num_outputs:    int  = Input(default=1, description="Number of images to generate per prompt"),
+        seed:           int  = Input(default=random.randint(0, 0xffff_ffff_ffff_ffff), description="Random seed"),
+        scale:          float = Input(default=0.4, ge=0.1, le=1.0, description="Scale factor for the ControlNet conditioning image"),
     ) -> List[Path]:
         """Run a single prediction on the model"""
 
@@ -68,7 +71,7 @@ class Predictor(BasePredictor):
         control_image           = Image.open(control_image).convert("RGB")
 
         # ---- Generation!
-        generator = torch.manual_seed(0)
+        generator = torch.manual_seed(seed)
         output = self.pipe_sd(
             prompt,
             num_inference_steps=20,
@@ -77,6 +80,7 @@ class Predictor(BasePredictor):
             control_image=control_image,
             mask_image=mask_image,
             num_images_per_prompt=num_outputs,
+            controlnet_conditioning_scale=scale,
         )
 
         # ---- Process output
